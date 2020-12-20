@@ -8,5 +8,4 @@
         <br />
         <asp:Button ID="Button2" runat="server" Text="Yhooでログインする"  BackColor="Red" BorderStyle="None" ForeColor="White" OnClick="Button2_Click" />
     </div>
-
 </asp:Content>

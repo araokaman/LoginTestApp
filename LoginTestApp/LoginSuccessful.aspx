@@ -12,6 +12,11 @@
         <div>
             <asp:Label ID="Label1" runat="server" Text="Label">ログイン完了</asp:Label>
         </div>
+        <br />
+        <br />
+        <div>
+            <asp:Button ID="Button1" runat="server" Text="LINEメッセージ送信" Visible="false" OnClick="Button1_Click"/>
+        </div>
     </form>
 </body>
 </html>

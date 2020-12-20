@@ -12,57 +12,78 @@ namespace LoginTestApp
 {
     public partial class _Default : Page
     {
-        string client_id;
-        string client_secret;
-        string response_type = "code";
-        //string redirectUrl = "https://r25.jp/";
-        string redirectUrl = "https://localhost:44383/LoginSuccessful";
+        //http://192.168.3.4:8080/Default
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Session.Clear();
-            int count = Request.Cookies.Count;
+            if (!IsPostBack)
+            {
+                //セッション変数代入用
+                int snsCode = 0;
+                string state = string.Empty;
+                
+                if(Session["sns"] != null && Session["state"] != null)
+                {
+                    snsCode = (int)Session["sns"];
+                    state = (string)Session["state"];
 
+                    if (state.Equals(Request.QueryString["state"]))
+                    {
+                        try
+                        {
+                            //アクセストークンを取得
+                            SocialLogincs socialLogincs = new SocialLogincs();
+                            Dictionary<string, string> responsePair = socialLogincs.GetAccessToken(snsCode, Request.QueryString["code"]);
+
+                            if (responsePair.ContainsKey("access_token") && responsePair.ContainsKey("token_type"))
+                            {
+                                //SNS別のユーザーIDを取得
+                                Dictionary<string, string> responseUserProfile = socialLogincs.GetUserProfile(snsCode, responsePair["access_token"], responsePair["token_type"]);
+
+                                //会員IDの検証
+                                int csfUserId = 0;      //SNSユーザーIDからCSF会員IDを抽出
+
+                                //SNSがLINEモバイルの場合、アクセストークンを無効化する
+                                if (snsCode == 1)
+                                {
+                                    socialLogincs.InvalidationAccessToken(responsePair["access_token"]);
+                                }
+
+                                //会員IDが紐づいていればログイン（トップページへリダイレクト）
+                                if (csfUserId > 0)
+                                {
+                                    Session["KaiinId"] = csfUserId;
+                                    Response.Redirect("http://192.168.3.4:8080/LoginSuccessful");
+                                }                                
+                            }
+                        }
+                        catch
+                        {
+                            //SNSログインエラーの例外処理
+                        }
+                    }
+                    //Session["sns"] = null;
+                    Session["state"] = null;
+                }
+            }
         }
 
         protected void Button1_Click(object sender, EventArgs e)
         {
-            string lineBaseUrl = @"https://access.line.me/oauth2/v2.1/authorize?";
-            string lineClientId = "1655374860";
-            string random = Guid.NewGuid().ToString("N").Substring(0, 30);
-            string lineLoginUrl = lineBaseUrl + string.Format("response_type={0}&client_id={1}&redirect_uri={2}&state={3}&scope={4}"
-                                                                , response_type, lineClientId, redirectUrl, random, "profile");
-            Session["state"] = random;
-            Session["sns"] = "line";
-            Response.Redirect(lineLoginUrl);
-            
-            #region
-            //var query = System.Web.HttpUtility.ParseQueryString("");
-            //query.Add("response_type", response_type);
-            //query.Add("client_id", lineClientId);
-            //query.Add("redirect_url", redirectUrl);
-            //query.Add("state", random);
-            //query.Add("scope", "profile");
-
-            //var uriBuilder = new System.UriBuilder("access.line.me/oauth2/v2.1/authorize")
-            //{
-            //    Query = query.ToString(), Scheme = Uri.UriSchemeHttps
-            //};
-
-            //Response.Redirect(uriBuilder.Uri.ToString());
-            #endregion
+            SocialLogincs socialLogincs = new SocialLogincs();
+            Dictionary<string, string> keyValues = socialLogincs.SocialLoginBtnPush(1);
+            Session["sns"] = 1;
+            Session["state"] = keyValues["state"];
+            Response.Redirect(keyValues["authorizationUri"]);
         }
 
         protected void Button2_Click(object sender, EventArgs e)
         {
-            string yahooBaseUrl = @"https://auth.login.yahoo.co.jp/yconnect/v1/authorization?";
-            string yahooClientId = "dj0zaiZpPXU1NjFDc3gxVmtrbCZzPWNvbnN1bWVyc2VjcmV0Jng9NDA-";
-            string random = Guid.NewGuid().ToString("N").Substring(0, 30);
-            string yahooLoginUrl = yahooBaseUrl + string.Format("response_type={0}&client_id={1}&redirect_uri={2}&scope={3}&state={4}"
-                                                                , response_type, yahooClientId, redirectUrl, "openid", random);
-            Session["state"] = random;
-            Session["sns"] = "yahoo";
-            Response.Redirect(yahooLoginUrl);
+            SocialLogincs socialLogincs = new SocialLogincs();
+            Dictionary<string, string> keyValues = socialLogincs.SocialLoginBtnPush(2);
+            Session["sns"] = 2;
+            Session["state"] = keyValues["state"];
+            Response.Redirect(keyValues["authorizationUri"]);
         }
     }
 }
