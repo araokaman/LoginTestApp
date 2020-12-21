@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Web;
 using Newtonsoft.Json;
@@ -50,7 +51,8 @@ namespace LoginTestApp
 
             string state = Guid.NewGuid().ToString("N").Substring(0, 30);
             StringBuilder authorizationUri = new StringBuilder();
-            authorizationUri.AppendFormat("{0}response_type={1}&client_id={2}&redirect_uri={3}&state={4}&scope={5}", baseUri, "code", clientId, ConfigurationManager.AppSettings["callBackUri"], state, scopeType);
+            //authorizationUri.AppendFormat("{0}response_type={1}&client_id={2}&redirect_uri={3}&state={4}&scope={5}", baseUri, "code", clientId, ConfigurationManager.AppSettings["callBackUri"], state, scopeType);
+            authorizationUri.AppendFormat("{0}response_type={1}&client_id={2}&redirect_uri={3}&state={4}&scope={5}", baseUri, "code", clientId, ConfigurationManager.AppSettings["callBackUri2"], state, scopeType);
 
             Dictionary<string, string> pairs = new Dictionary<string, string>();
             pairs.Add("authorizationUri", authorizationUri.ToString());
@@ -76,7 +78,8 @@ namespace LoginTestApp
             request.AddHeader("content-type", "application/x-www-form-urlencoded");
             request.AddParameter("grant_type", "authorization_code");
             request.AddParameter("code", code);
-            request.AddParameter("redirect_uri", ConfigurationManager.AppSettings["callBackUri"]);
+            //request.AddParameter("redirect_uri", ConfigurationManager.AppSettings["callBackUri"]);
+            request.AddParameter("redirect_uri", ConfigurationManager.AppSettings["callBackUri2"]);
 
             //SNS別で値を設定
             switch (sessionSnsCode)
@@ -152,6 +155,7 @@ namespace LoginTestApp
         }
         #endregion
 
+        #region 特定ユーザー宛にLINEメッセージを送信する
         /// <summary>
         /// 特定のユーザーにLINEメッセージを送信する
         /// </summary>
@@ -164,33 +168,46 @@ namespace LoginTestApp
             request.AddHeader("content-type", "application/json");
             request.AddHeader("Authorization", "Bearer " + ConfigurationManager.AppSettings["lineMessageToken"]);
 
+            //ユーザーIDを設定して、メッセージ用Jsonモデルを生成
+            lineUserId = ConfigurationManager.AppSettings["lineMyUserId"];
             LineMessage lineMessage = new LineMessage("text", "Hello, world");
-            SendingParty sendingParty = new SendingParty("", lineMessage);      //toUserIdを入力
+            LineMessage[] lineMessages = new LineMessage[] { lineMessage };
+            SendingParty sendingParty = new SendingParty(lineUserId.ToString(), lineMessages);      //toUserIdを入力
             var json = JsonConvert.SerializeObject(sendingParty);
-            request.AddParameter();
+            request.AddJsonBody(json);
+            request.RequestFormat = DataFormat.Json;
 
             //LINEのみ必要な処理となるため、LINE用のURIを設定
             client.BaseUrl = new Uri(ConfigurationManager.AppSettings["lineApiUri5"]);
 
             IRestResponse response = client.Execute(request);
+            return response != null ? true : false;
         }
+        #endregion
     }
 
+    #region LINEメッセージ送信用のJsonモデル
+    /// <summary>
+    /// LINEメッセージオブジェクト
+    /// </summary>
     public class SendingParty
     {
         [JsonProperty("to")]
         public string UserId { get; set; }
 
-        [JsonProperty("message")]
-        public LineMessage lineMessage { get; set; }
+        [JsonProperty("messages")]
+        public LineMessage[] lineMessages { get; set; }
 
-        public SendingParty(string userId, LineMessage message)
+        public SendingParty(string userId, LineMessage[] messages)
         {
             this.UserId = userId;
-            this.lineMessage = message;
+            this.lineMessages = messages;
         }
     }
 
+    /// <summary>
+    /// テキストメッセージ
+    /// </summary>
     public class LineMessage
     {
         [JsonProperty("type")]
@@ -205,4 +222,5 @@ namespace LoginTestApp
             this.Text = text;
         }
     }
+    #endregion
 }

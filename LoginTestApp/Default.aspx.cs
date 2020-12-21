@@ -12,7 +12,11 @@ namespace LoginTestApp
 {
     public partial class _Default : Page
     {
+        //自宅
         //http://192.168.3.4:8080/Default
+
+        //職場
+        //https://localhost:44383/Default
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -41,7 +45,7 @@ namespace LoginTestApp
                                 Dictionary<string, string> responseUserProfile = socialLogincs.GetUserProfile(snsCode, responsePair["access_token"], responsePair["token_type"]);
 
                                 //会員IDの検証
-                                int csfUserId = 0;      //SNSユーザーIDからCSF会員IDを抽出
+                                string csfUserId = string.Empty;      //SNSユーザーIDからCSF会員IDを抽出
 
                                 //SNSがLINEモバイルの場合、アクセストークンを無効化する
                                 if (snsCode == 1)
@@ -50,10 +54,11 @@ namespace LoginTestApp
                                 }
 
                                 //会員IDが紐づいていればログイン（トップページへリダイレクト）
-                                if (csfUserId > 0)
+                                if (!string.IsNullOrWhiteSpace(csfUserId))
                                 {
                                     Session["KaiinId"] = csfUserId;
-                                    Response.Redirect("http://192.168.3.4:8080/LoginSuccessful");
+                                    //Response.Redirect("http://192.168.3.4:8080/LoginSuccessful");
+                                    Response.Redirect("https://localhost:44383/LoginSuccessful");
                                 }                                
                             }
                         }
