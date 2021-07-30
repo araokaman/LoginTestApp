@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
+using System.Net;
 using System.Text;
-using System.Web;
 using Newtonsoft.Json;
 using RestSharp;
 
@@ -95,7 +94,6 @@ namespace LoginTestApp
             }
 
             IRestResponse response = client.Execute(request);
-            //Dictionary<string, string> jsonDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
             return JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
         }
         #endregion
@@ -124,12 +122,11 @@ namespace LoginTestApp
                     break;
                 //YAHOO
                 case 2:
-                    client.BaseUrl = new Uri(ConfigurationManager.AppSettings["yahooApiUri3"]);                    
+                    client.BaseUrl = new Uri(ConfigurationManager.AppSettings["yahooApiUri3"]);
                     break;
             }
             request.AddHeader("Authorization", tokenType + " " + accessToken);
             IRestResponse response = client.Execute(request);
-            //Dictionary<string, string> jsonDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
             return JsonConvert.DeserializeObject<Dictionary<string, string>>(response.Content);
         }
         #endregion
@@ -145,7 +142,7 @@ namespace LoginTestApp
             request.AddParameter("client_secret", ConfigurationManager.AppSettings["lineApiSecret"]);
 
             //LINEのみ必要な処理となるため、LINE用のURIを設定
-            client.BaseUrl = new Uri(ConfigurationManager.AppSettings["lineApiUri4"]);            
+            client.BaseUrl = new Uri(ConfigurationManager.AppSettings["lineApiUri4"]);
 
             IRestResponse response = client.Execute(request);
             return response != null ? true : false;
@@ -164,40 +161,61 @@ namespace LoginTestApp
             request.AddHeader("content-type", "application/json");
             request.AddHeader("Authorization", "Bearer " + ConfigurationManager.AppSettings["lineMessageToken"]);
 
-            LineMessage lineMessage = new LineMessage("text", "Hello, world");
-            SendingParty sendingParty = new SendingParty("", lineMessage);      //toUserIdを入力
-            var json = JsonConvert.SerializeObject(sendingParty);
-            request.AddParameter();
+            //LINEのメッセージを作成
+            var jsonBody = JsonConvert.SerializeObject(CreateLineMessage(lineUserId, "Hello!!"));
+            request.AddJsonBody(jsonBody);
 
             //LINEのみ必要な処理となるため、LINE用のURIを設定
             client.BaseUrl = new Uri(ConfigurationManager.AppSettings["lineApiUri5"]);
 
             IRestResponse response = client.Execute(request);
+            //ステータスコードチェック
+            if (response.StatusCode.Equals(HttpStatusCode.OK))
+            {
+                //ステータスコードOKであれば正常
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// LINEの通知メッセージを作成する
+        /// </summary>
+        /// <param name="toUserId">通知先LINE ID</param>
+        /// <param name="paramMessage">通知メッセージのテキスト</param>
+        /// <returns></returns>
+        private SendingParty CreateLineMessage(string toUserId, string paramMessage)
+        {
+            LineMessage[] lineMessages = new LineMessage[] { new LineMessage("text", paramMessage) };
+            return new SendingParty(toUserId, lineMessages);
         }
     }
 
+    /// <summary>
+    /// LINEメッセージ用のJsonプロパティ
+    /// </summary>
     public class SendingParty
     {
         [JsonProperty("to")]
         public string UserId { get; set; }
 
-        [JsonProperty("message")]
-        public LineMessage lineMessage { get; set; }
+        [JsonProperty("messages")]
+        public LineMessage[] lineMessage { get; set; }
 
-        public SendingParty(string userId, LineMessage message)
+        public SendingParty(string userId, LineMessage[] messages)
         {
             this.UserId = userId;
-            this.lineMessage = message;
+            this.lineMessage = messages;
         }
     }
 
     public class LineMessage
     {
         [JsonProperty("type")]
-        public string Type { get; set; }
+        string Type { get; set; }
 
         [JsonProperty("text")]
-        public string Text { get; set; }
+        string Text { get; set; }
 
         public LineMessage(string type, string text)
         {
