@@ -180,6 +180,7 @@ namespace LoginTestApp
             }
             return false;
         }
+        #endregion
 
         /// <summary>
         /// LINEの通知メッセージを作成する
@@ -191,10 +192,10 @@ namespace LoginTestApp
         {
             LineMessage[] lineMessages = new LineMessage[] { new LineMessage("text", paramMessage) };
             return new SendingParty(toUserId, lineMessages);
-        }
-        #endregion
+        }        
     }
 
+    #region Jsonプロパティ
     /// <summary>
     /// LINEメッセージ用のJsonプロパティ
     /// </summary>
@@ -214,7 +215,7 @@ namespace LoginTestApp
     }
 
     /// <summary>
-    /// テキストメッセージ
+    /// テキストメッセージのJsonプロパティ
     /// </summary>
     public class LineMessage
     {

@@ -35,8 +35,6 @@ namespace LoginTestApp
         protected void Button1_Click(object sender, EventArgs e)
         {
             SocialLogincs socialLogincs = new SocialLogincs();
-            //CFS会員IDからLINEのユーザーIDを取得
-
             socialLogincs.SendLineMessage(userId);      //userID = LINEのユーザーID
         }
     }
