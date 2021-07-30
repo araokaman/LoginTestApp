@@ -22,7 +22,7 @@ namespace LoginTestApp
                 if(Session["sns"] != null && Session["KaiinId"] != null)
                 {
                     snsCode = (int)Session["sns"];
-                    userId = (string)Session["KaiinI"];
+                    userId = (string)Session["KaiinId"];
 
                     if (snsCode == 1)
                     {
@@ -35,7 +35,9 @@ namespace LoginTestApp
         protected void Button1_Click(object sender, EventArgs e)
         {
             SocialLogincs socialLogincs = new SocialLogincs();
-            socialLogincs.SendLineMessage(userId);
+            //CFS会員IDからLINEのユーザーIDを取得
+
+            socialLogincs.SendLineMessage(userId);      //userID = LINEのユーザーID
         }
     }
 }

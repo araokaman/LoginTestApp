@@ -49,7 +49,8 @@ namespace LoginTestApp
 
             string state = Guid.NewGuid().ToString("N").Substring(0, 30);
             StringBuilder authorizationUri = new StringBuilder();
-            authorizationUri.AppendFormat("{0}response_type={1}&client_id={2}&redirect_uri={3}&state={4}&scope={5}", baseUri, "code", clientId, ConfigurationManager.AppSettings["callBackUri"], state, scopeType);
+            //authorizationUri.AppendFormat("{0}response_type={1}&client_id={2}&redirect_uri={3}&state={4}&scope={5}", baseUri, "code", clientId, ConfigurationManager.AppSettings["callBackUri"], state, scopeType);
+            authorizationUri.AppendFormat("{0}response_type={1}&client_id={2}&redirect_uri={3}&state={4}&scope={5}", baseUri, "code", clientId, ConfigurationManager.AppSettings["callBackUri2"], state, scopeType);
 
             Dictionary<string, string> pairs = new Dictionary<string, string>();
             pairs.Add("authorizationUri", authorizationUri.ToString());
@@ -75,7 +76,8 @@ namespace LoginTestApp
             request.AddHeader("content-type", "application/x-www-form-urlencoded");
             request.AddParameter("grant_type", "authorization_code");
             request.AddParameter("code", code);
-            request.AddParameter("redirect_uri", ConfigurationManager.AppSettings["callBackUri"]);
+            //request.AddParameter("redirect_uri", ConfigurationManager.AppSettings["callBackUri"]);
+            request.AddParameter("redirect_uri", ConfigurationManager.AppSettings["callBackUri2"]);
 
             //SNS別で値を設定
             switch (sessionSnsCode)
@@ -149,6 +151,7 @@ namespace LoginTestApp
         }
         #endregion
 
+        #region 特定ユーザー宛にLINEメッセージを送信する
         /// <summary>
         /// 特定のユーザーにLINEメッセージを送信する
         /// </summary>
@@ -189,6 +192,7 @@ namespace LoginTestApp
             LineMessage[] lineMessages = new LineMessage[] { new LineMessage("text", paramMessage) };
             return new SendingParty(toUserId, lineMessages);
         }
+        #endregion
     }
 
     /// <summary>
@@ -209,6 +213,9 @@ namespace LoginTestApp
         }
     }
 
+    /// <summary>
+    /// テキストメッセージ
+    /// </summary>
     public class LineMessage
     {
         [JsonProperty("type")]
@@ -223,4 +230,5 @@ namespace LoginTestApp
             this.Text = text;
         }
     }
+    #endregion
 }
